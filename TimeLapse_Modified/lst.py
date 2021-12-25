@@ -173,6 +173,7 @@ def app():
             if asset_id:
                 with st.expander("Customize band combination and color palette", True):
                     try:
+                        ee.Initialize()
                         col = ee.ImageCollection.load(asset_id)
                         size = col.size().getInfo()
                         st.session_state["ee_asset_id"] = asset_id
