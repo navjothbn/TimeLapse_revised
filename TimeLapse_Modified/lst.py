@@ -64,6 +64,7 @@ def uploaded_file_to_gdf(data):
 def app():
 
     today = date.today()
+    ee.Initialize()        
 
     # st.subheader("Create Timelapse")
 
