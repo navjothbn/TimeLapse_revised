@@ -1188,5 +1188,5 @@ def app():
                             st.error(
                                 "Something went wrong. You either requested too much data or the ROI is outside the U.S."
                             )
- app()
+app()
 
