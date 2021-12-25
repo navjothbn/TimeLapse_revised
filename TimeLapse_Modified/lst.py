@@ -64,16 +64,15 @@ def uploaded_file_to_gdf(data):
 def app():
 
     today = date.today()
-#     ee.Initialize()        
 
-    # st.subheader("Create Timelapse")
+    st.title("Create Timelapse")
 
-    # st.markdown(
-    #     """
-    #     An interactive web app for creating [Landsat](https://developers.google.com/earth-engine/datasets/catalog/landsat)/[GOES](https://jstnbraaten.medium.com/goes-in-earth-engine-53fbc8783c16) timelapse for any location around the globe. 
-    #     The app was built using [streamlit](https://streamlit.io), [geemap](https://geemap.org), and [Google Earth Engine](https://earthengine.google.com). 
-    # """
-    # )
+    st.markdown(
+        """
+        An interactive web app for creating [Landsat](https://developers.google.com/earth-engine/datasets/catalog/landsat)/[GOES](https://jstnbraaten.medium.com/goes-in-earth-engine-53fbc8783c16) timelapse for any location around the globe. 
+        The app was built using [streamlit](https://streamlit.io), [geemap](https://geemap.org), and [Google Earth Engine](https://earthengine.google.com). For more info, check out my streamlit [blog post](https://blog.streamlit.io/creating-satellite-timelapse-with-streamlit-and-earth-engine). 
+    """
+    )
 
     row1_col1, row1_col2 = st.columns([2, 1])
 
@@ -86,11 +85,9 @@ def app():
     st.session_state["vis_params"] = None
 
     with row1_col1:
-        boulder_coords = [17.6868,83.2185]
-
-        #Create the map
-        # m = leafmap.Map(location = boulder_coords, zoom_start = 5,plugin_Draw=True, draw_export=True)
-        m = geemap.Map(basemap="HYBRID", plugin_Draw=True, draw_export=True)
+        m = geemap.Map(
+            basemap="HYBRID", plugin_Draw=True, draw_export=True, locate_control=True
+        )
         m.add_basemap("ROADMAP")
 
     with row1_col2:
@@ -117,6 +114,7 @@ def app():
                 "Geostationary Operational Environmental Satellites (GOES)",
                 "MODIS Vegetation Indices (NDVI/EVI) 16-Day Global 1km",
                 "MODIS Gap filled Land Surface Temperature Daily",
+                "USDA National Agriculture Imagery Program (NAIP)",
             ],
             index=1,
         )
@@ -173,7 +171,6 @@ def app():
             if asset_id:
                 with st.expander("Customize band combination and color palette", True):
                     try:
-                        ee.Initialize()
                         col = ee.ImageCollection.load(asset_id)
                         size = col.size().getInfo()
                         st.session_state["ee_asset_id"] = asset_id
@@ -320,13 +317,13 @@ def app():
 
     with row1_col1:
 
-        # with st.expander(
-        #     "Steps: Draw a rectangle on the map -> Export it as a GeoJSON -> Upload it back to the app -> Click the Submit button. Expand this tab to see a demo 👉"
-        # ):
-        #     video_empty = st.empty()
+        with st.expander(
+            "Steps: Draw a rectangle on the map -> Export it as a GeoJSON -> Upload it back to the app -> Click the Submit button. Expand this tab to see a demo 👉"
+        ):
+            video_empty = st.empty()
 
         data = st.file_uploader(
-            "Upload a GeoJSON file to use as an ROI. Customize timelapse parameters and then click the Submit button",
+            "Upload a GeoJSON file to use as an ROI. Customize timelapse parameters and then click the Submit button 😇👇",
             type=["geojson"],
         )
 
@@ -338,7 +335,10 @@ def app():
                 # )
                 if (
                     collection
-                    == "Geostationary Operational Environmental Satellites (GOES)"
+                    in [
+                        "Geostationary Operational Environmental Satellites (GOES)",
+                        "USDA National Agriculture Imagery Program (NAIP)",
+                    ]
                     and (not keyword)
                 ):
                     m.set_center(-100, 40, 3)
@@ -411,7 +411,7 @@ def app():
                 sensor_start_year = 2015
                 timelapse_title = "Sentinel-2 Timelapse"
                 timelapse_speed = 5
-            # video_empty.video("https://youtu.be/VVRK_-dEjR4")
+            video_empty.video("https://youtu.be/VVRK_-dEjR4")
 
             with st.form("submit_landsat_form"):
 
@@ -436,6 +436,8 @@ def app():
                         "NIR/SWIR1/Blue",
                         "SWIR2/NIR/Green",
                         "SWIR1/NIR/Red",
+                        "SWIR2/NIR/SWIR1",
+                        "SWIR1/NIR/SWIR2",
                     ],
                     index=9,
                 )
@@ -588,7 +590,7 @@ def app():
 
         elif collection == "Geostationary Operational Environmental Satellites (GOES)":
 
-            # video_empty.video("https://youtu.be/16fA2QORG4A")
+            video_empty.video("https://youtu.be/16fA2QORG4A")
 
             with st.form("submit_goes_form"):
 
@@ -748,7 +750,7 @@ def app():
 
         elif collection == "MODIS Vegetation Indices (NDVI/EVI) 16-Day Global 1km":
 
-            # video_empty.video("https://youtu.be/16fA2QORG4A")
+            video_empty.video("https://youtu.be/16fA2QORG4A")
 
             satellite = st.selectbox("Select a satellite:", ["Terra", "Aqua"])
             band = st.selectbox("Select a band:", ["NDVI", "EVI"])
@@ -896,7 +898,7 @@ def app():
                     roi = st.session_state.get("roi")
                 out_gif = geemap.temp_file_path(".gif")
 
-                submitted = st.form_submit_button("Submit_timelapse")
+                submitted = st.form_submit_button("Submit")
                 if submitted:
 
                     if sample_roi == "Uploaded GeoJSON" and data is None:
@@ -1007,7 +1009,7 @@ def app():
                     roi = st.session_state.get("roi")
                 out_gif = geemap.temp_file_path(".gif")
 
-                submitted = st.form_submit_button("Submit_timelapse")
+                submitted = st.form_submit_button("Submit")
                 if submitted:
 
                     if sample_roi == "Uploaded GeoJSON" and data is None:
@@ -1077,6 +1079,114 @@ def app():
                             st.error(
                                 "Something went wrong. You probably requested too much data. Try reducing the ROI or timespan."
                             )
-if __name__ == '__main__':
-    app()   
-                     
+
+        elif collection == "USDA National Agriculture Imagery Program (NAIP)":
+
+            with st.form("submit_naip_form"):
+                with st.expander("Customize timelapse"):
+
+                    title = st.text_input(
+                        "Enter a title to show on the timelapse: ", "NAIP Timelapse"
+                    )
+
+                    years = st.slider(
+                        "Start and end year:",
+                        2003,
+                        today.year,
+                        (2003, today.year),
+                    )
+
+                    bands = st.selectbox(
+                        "Select a band combination:", ["N/R/G", "R/G/B"], index=0
+                    )
+
+                    speed = st.slider("Frames per second:", 1, 30, 3)
+                    add_progress_bar = st.checkbox("Add a progress bar", True)
+                    progress_bar_color = st.color_picker(
+                        "Progress bar color:", "#0000ff"
+                    )
+                    font_size = st.slider("Font size:", 10, 50, 30)
+                    font_color = st.color_picker("Font color:", "#ffffff")
+                    font_type = st.selectbox(
+                        "Select the font type for the title:",
+                        ["arial.ttf", "alibaba.otf"],
+                        index=0,
+                    )
+                    mp4 = st.checkbox("Save timelapse as MP4", True)
+
+                empty_text = st.empty()
+                empty_image = st.empty()
+                empty_video = st.container()
+                empty_fire_image = st.empty()
+
+                roi = None
+                if st.session_state.get("roi") is not None:
+                    roi = st.session_state.get("roi")
+                out_gif = geemap.temp_file_path(".gif")
+
+                submitted = st.form_submit_button("Submit")
+                if submitted:
+
+                    if sample_roi == "Uploaded GeoJSON" and data is None:
+                        empty_text.warning(
+                            "Steps to create a timelapse: Draw a rectangle on the map -> Export it as a GeoJSON -> Upload it back to the app -> Click the Submit button. Alternatively, you can select a sample ROI from the dropdown list."
+                        )
+                    else:
+
+                        empty_text.text("Computing... Please wait...")
+                        try:
+                            geemap.naip_timelapse(
+                                roi,
+                                years[0],
+                                years[1],
+                                out_gif,
+                                bands=bands.split("/"),
+                                palette=st.session_state.get("palette"),
+                                vis_params=None,
+                                dimensions=768,
+                                frames_per_second=speed,
+                                crs="EPSG:3857",
+                                overlay_data=overlay_data,
+                                overlay_color=overlay_color,
+                                overlay_width=overlay_width,
+                                overlay_opacity=overlay_opacity,
+                                title=title,
+                                title_xy=("2%", "90%"),
+                                add_text=True,
+                                text_xy=("2%", "2%"),
+                                text_sequence=None,
+                                font_type=font_type,
+                                font_size=font_size,
+                                font_color=font_color,
+                                add_progress_bar=add_progress_bar,
+                                progress_bar_color=progress_bar_color,
+                                progress_bar_height=5,
+                                loop=0,
+                                mp4=mp4,
+                            )
+                        except:
+                            empty_text.error(
+                                "Something went wrong. You either requested too much data or the ROI is outside the U.S."
+                            )
+
+                        if out_gif is not None and os.path.exists(out_gif):
+
+                            empty_text.text(
+                                "Right click the GIF to save it to your computer👇"
+                            )
+                            empty_image.image(out_gif)
+
+                            out_mp4 = out_gif.replace(".gif", ".mp4")
+                            if mp4 and os.path.exists(out_mp4):
+                                with empty_video:
+                                    st.text(
+                                        "Right click the MP4 to save it to your computer👇"
+                                    )
+                                    st.video(out_gif.replace(".gif", ".mp4"))
+
+                        else:
+                            st.error(
+                                "Something went wrong. You either requested too much data or the ROI is outside the U.S."
+                            )
+ app()
+
